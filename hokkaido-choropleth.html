@@ -6,7 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
-  #map { height: 100vh; }
+  #map {
+    width: 100%;
+    height: 100vh;
+  }
 </style>
 </head>
 <body>
@@ -14,7 +17,19 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-// ▼ ここに北海道市町村境界のGeoJSONをコピペ ▼
+// --- 北海道市町村人口データ（市町村コード: 人口）サンプル ---
+const populationData = {
+  "01202": 1952356, // 札幌市
+  "01203": 174716,  // 函館市
+  "01204": 119796,  // 小樽市
+  "01205": 339605,  // 旭川市
+  "01206": 171349,  // 室蘭市
+  "01207": 120768,  // 釧路市
+  "01208": 176602,  // 帯広市
+  // ... 他市町村も必要に応じて追加
+};
+
+// --- 北海道市町村境界GeoJSONデータ ---
 const hokkaidoGeoJSON = {
 "type": "FeatureCollection",
 "name": "hokkaido_web_4612",
@@ -207,14 +222,7 @@ const hokkaidoGeoJSON = {
 }
  ;
 
-// ▼ サンプル人口データ（実際は全市町村分を用意）
-const populationData = {
-  "札幌市中央区": 250000,
-  "札幌市北区": 290000,
-  // ... 以下略
-};
-
-// 色を人口に応じて変える関数
+// Leaflet マップ描画
 function getColor(pop) {
   return pop > 200000 ? '#800026' :
          pop > 100000 ? '#BD0026' :
