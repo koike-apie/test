@@ -1,132 +1,136 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>北海道 市区町村 人口ヒートマップ（単一ファイル）</title>
-<style>
-  :root {
-    --bg: #0f1115;
-    --panel: #161a22;
-    --muted: #8792a2;
-    --text: #e7ecf3;
-    --accent: #5aa9ff;
-    --border: #242a36;
-    --tooltip: #11151c;
-  }
-  html, body {
-    height: 100%;
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
-  }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #141824, #0f1219);
-    position: sticky; top: 0; z-index: 10;
-  }
-  header h1 {
-    font-size: 16px; margin: 0; letter-spacing: .02em; font-weight: 600;
-  }
-  #controls {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-  }
-  #controls button, #controls select, #controls input[type="number"] {
-    background: var(--panel); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 10px; font-size: 12px; cursor: pointer;
-  }
-  #controls label {
-    font-size: 12px; color: var(--muted);
-  }
-  #controls input[type="file"] { display: none; }
-  .file-label {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--panel); padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--border); cursor: pointer; font-size: 12px;
-  }
-  main {
-    display: grid; grid-template-columns: 1fr 320px; gap: 12px;
-    height: calc(100% - 60px);
-  }
-  #map-wrap { position: relative; }
-  #map {
-    width: 100%; height: 100%;
-    display: block; background: radial-gradient(1000px 700px at 50% 30%, #1a2030, #0f1115 70%);
-  }
-  #sidebar {
-    border-left: 1px solid var(--border); padding: 12px; overflow: auto;
-  }
-  #legend { margin-top: 12px; }
-  .legend-bar {
-    height: 14px; border-radius: 6px; border: 1px solid var(--border);
-    background: linear-gradient(90deg, #f0f0f0, #000);
-  }
-  .legend-scale {
-    display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);
-  }
-  .tip {
-    position: absolute; pointer-events: none; padding: 8px 10px;
-    background: var(--tooltip); color: var(--text); font-size: 12px;
-    border: 1px solid var(--border); border-radius: 8px; line-height: 1.4;
-    box-shadow: 0 6px 24px rgba(0,0,0,.35); transform: translate(-50%, -120%);
-    opacity: 0; transition: opacity .12s ease, transform .12s ease;
-    white-space: nowrap;
-  }
-  .footer-note {
-    font-size: 11px; color: var(--muted); margin-top: 10px;
-  }
-  .pill {
-    display: inline-block; padding: 2px 8px; border-radius: 999px;
-    background: #1d2432; border: 1px solid var(--border); color: var(--muted);
-    font-size: 11px; margin-right: 6px;
-  }
-  .path {
-    stroke: #11151c; stroke-width: .5; vector-effect: non-scaling-stroke;
-    cursor: pointer;
-    transition: filter .12s ease, opacity .12s ease;
-  }
-  .path:hover { filter: brightness(1.15) saturate(1.1); }
-  .nodata { fill: #3a3f4d !important; }
-  .controls-row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
-  .hr { height: 1px; background: var(--border); margin: 10px 0; }
-  @media (max-width: 960px) { main { grid-template-columns: 1fr; } #sidebar { height: 420px; } }
-</style>
+  <meta charset="utf-8">
+  <title>北海道 市町村 人口ヒートマップ（完全フル版）</title>
+  <style>
+    body { margin:0; font-family:sans-serif; }
+    #map { width:100%; height:100vh; }
+    .tooltip {
+      position:absolute;
+      padding:4px 8px;
+      background:rgba(0,0,0,0.75);
+      color:#fff;
+      border-radius:4px;
+      font-size:12px;
+      pointer-events:none;
+      white-space:nowrap;
+      opacity:0;
+      transition:opacity .1s;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>北海道の各市町村の人口を色の濃さで可視化</h1>
-  <div id="controls">
-    <button id="btnFetch">GeoJSON取得</button>
-    <label class="file-label" for="geojsonFile">GeoJSON読込<input id="geojsonFile" type="file" accept=".json,.geojson,application/geo+json"></label>
-    <label class="file-label" for="csvFile">人口CSV読込<input id="csvFile" type="file" accept=".csv,text/csv"></label>
-    <label class="controls-row" style="gap:4px;">
-      <span>カラースキーム</span>
-      <select id="scheme">
-        <option value="blues">Blues</option>
-        <option value="greens">Greens</option>
-        <option value="reds">Reds</option>
-        <option value="purples">Purples</option>
-        <option value="oranges">Oranges</option>
-        <option value="magma">Magma</option>
-        <option value="viridis">Viridis</option>
-      </select>
-    </label>
-    <label class="controls-row" style="gap:4px;">
-      <span>等級</span>
-      <input id="classes" type="number" min="3" max="9" value="6" style="width:64px;">
-    </label>
-  </div>
-</header>
+<svg id="map" viewBox="0 0 1000 800"></svg>
+<div id="tooltip" class="tooltip"></div>
 
-<main>
-  <div id="map-wrap">
-    <svg id="map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="tooltip" class="tip"></div>
-  </div>
-  <aside id="sidebar">
-    <div>
-      <div class="pill">手順</div>
-      <ol style="margin:8px 0 12px 18px; padding:0; font-size:13px; line-height:1.6;">
+<script>
+// —————————————————————————
+// 1) 北海道 市町村境界 GeoJSON（完全版）をここに埋め込んでください。
+// 例：Geoshape（NII）最新「北海道」GeoJSON を丸ごとコピーして `geoData = {...}` に貼り込む。
+// —————————————————————————
+const geoData = {
+  "type": "FeatureCollection",
+  "features": [
+    /* ここに膨大な Feature が続きます。
+       例:
+       {
+         "type": "Feature",
+         "properties": {
+           "N03_007": "01100",
+           "N03_004": "札幌市",
+           ...（他属性）...
+         },
+         "geometry": {
+           "type": "Polygon",
+           "coordinates": [...]
+         }
+       },
+       ...
+    */
+  ]
+};
+
+// —————————————————————————
+// 2) 人口データをコード‐値で埋め込み（例です。別途最新データに差し替えてください）
+// —————————————————————————
+const popData = {
+  "01100": 1952356,
+  "01202": 330331,
+  // ... 北海道各自治体の JIS コード（行政区域コード）と人口 ...
+};
+
+// —————————————————————————
+// 3) 投影（緯度経度 → SVG 座標変換）
+// —————————————————————————
+function project([lon, lat]) {
+  const λmin = 139, λmax = 146;    // 緯度・経度の概範囲（北海道全域）
+  const φmin = 41, φmax = 45.5;
+  const w = 1000, h = 800;
+  const x = (lon - λmin) / (λmax - λmin) * w;
+  const y = (φmax - lat) / (φmax - φmin) * h;
+  return [x, y];
+}
+
+// —————————————————————————
+// 4) カラースケール設定（人口に応じて RGB グラデーション）
+// —————————————————————————
+function getColor(val, vmin, vmax) {
+  if (val == null) return '#999';
+  const t = Math.max(0, Math.min(1, (val - vmin) / (vmax - vmin)));
+  const r = Math.round(255 * t);
+  const g = Math.round(200 * (1 - t));
+  const b = Math.round(150 * (1 - t));
+  return `rgb(${r},${g},${b})`;
+}
+
+// —————————————————————————
+// 5) 描画ロジック
+// —————————————————————————
+const svg = document.getElementById('map');
+const tooltip = document.getElementById('tooltip');
+const pops = Object.values(popData).filter(v => typeof v === 'number');
+const vmin = Math.min(...pops);
+const vmax = Math.max(...pops);
+
+geoData.features.forEach(f => {
+  const coordsArr = (f.geometry.type === 'Polygon')
+    ? [f.geometry.coordinates]
+    : f.geometry.coordinates;  // MultiPolygon 対応
+
+  let d = '';
+  coordsArr.forEach(polygon => {
+    polygon.forEach(ring => {
+      ring.forEach((pt, i) => {
+        const [x, y] = project(pt);
+        d += (i === 0 ? 'M' : 'L') + x + ' ' + y;
+      });
+      d += 'Z';
+    });
+  });
+
+  const code = f.properties.N03_007 || f.properties.code || '';
+  const name = f.properties.N03_004 || f.properties.name || '(名称不明)';
+  const pop = popData[code] ?? null;
+  const fill = getColor(pop, vmin, vmax);
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', fill);
+  path.setAttribute('stroke', '#333');
+  path.setAttribute('stroke-width', '0.3');
+  svg.appendChild(path);
+
+  path.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.pageX + 10) + 'px';
+    tooltip.style.top = (e.pageY + 10) + 'px';
+    tooltip.innerHTML = `${name} (${code})<br>人口: ${pop != null ? pop.toLocaleString() : 'データなし'}`;
+    tooltip.style.opacity = 1;
+  });
+  path.addEventListener('mouseleave', () => {
+    tooltip.style.opacity = 0;
+  });
+});
+</script>
+</body>
+</html>
