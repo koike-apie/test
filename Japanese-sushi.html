@@ -1,5 +1,5 @@
-// 🍛 Indian Curry Map - Modern Single-Page Application
-// 500年の叡智で作られた、おしゃれなインドカレー店マップ
+// 🍣 Japanese Sushi Map - Modern Single-Page Application
+// 500年の叡智で作られた、おしゃれな寿司店マップ
 // 
 // Dependencies: express, node-fetch@2, cheerio
 // Install: npm i express node-fetch@2 cheerio
@@ -11,12 +11,12 @@ const cheerio = require('cheerio');
 
 // 🎨 Configuration
 const CONFIG = {
-  PORT: process.env.PORT || 3000,
+  PORT: process.env.PORT || 3001,
   HOTPEPPER_KEY: process.env.HOTPEPPER_KEY || '',
   SVG_URL: 'https://raw.githubusercontent.com/geolonia/japanese-prefectures/master/svg/japan.svg',
   OVERPASS_URL: 'https://overpass-api.de/api/interpreter',
   HOTPEPPER_BASE_URL: 'http://webservice.recruit.co.jp/hotpepper/gourmet/v1/',
-  USER_AGENT: 'Indian-Curry-Map/2.0 (https://github.com/your-repo)'
+  USER_AGENT: 'Japanese-Sushi-Map/2.0 (https://github.com/your-repo)'
 };
 
 // 🗺️ Prefecture mapping
@@ -34,7 +34,6 @@ const PREFECTURE_MAP = {
   '佐賀県': 'PREF41', '長崎県': 'PREF42', '熊本県': 'PREF43', '大分県': 'PREF44',
   '宮崎県': 'PREF45', '鹿児島県': 'PREF46', '沖縄県': 'PREF47'
 };
-
 
 // 🚀 Express app setup
 const app = express();
@@ -88,9 +87,9 @@ class Utils {
   }
 }
 
-// 🍛 HotPepper API Service
+// 🍣 HotPepper API Service
 class HotPepperService {
-  static async searchShops(prefecture, keyword = 'インドカレー') {
+  static async searchShops(prefecture, keyword = '寿司') {
     if (!CONFIG.HOTPEPPER_KEY) {
       throw new Error('HotPepper API key not configured');
     }
@@ -122,9 +121,9 @@ class OverpassService {
 [out:json][timeout:25];
 area["name"="${prefecture}"]["boundary"="administrative"]["admin_level"="4"]->.searchArea;
 (
-  node["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
-  way["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
-  relation["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+  node["amenity"="restaurant"]["cuisine"~"^sushi$|^japanese$"](area.searchArea);
+  way["amenity"="restaurant"]["cuisine"~"^sushi$|^japanese$"](area.searchArea);
+  relation["amenity"="restaurant"]["cuisine"~"^sushi$|^japanese$"](area.searchArea);
 );
 out tags center;`;
 
@@ -165,7 +164,7 @@ const generateHTML = () => `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🍛 日本のインドカレー店マップ - 500年の叡智版</title>
+  <title>🍣 日本の寿司店マップ - 500年の叡智版</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -174,8 +173,8 @@ const generateHTML = () => `<!DOCTYPE html>
       --bg-primary: #0a0e1a;
       --bg-secondary: #111827;
       --bg-card: #1f2937;
-      --accent-primary: #f59e0b;
-      --accent-secondary: #fbbf24;
+      --accent-primary: #10b981;
+      --accent-secondary: #34d399;
       --text-primary: #f9fafb;
       --text-secondary: #9ca3af;
       --text-muted: #6b7280;
@@ -183,8 +182,8 @@ const generateHTML = () => `<!DOCTYPE html>
       --border-light: #4b5563;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
       --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --gradient-accent: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+      --gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --gradient-accent: linear-gradient(135deg, #10b981 0%, #34d399 100%);
     }
 
     * {
@@ -347,7 +346,7 @@ const generateHTML = () => `<!DOCTYPE html>
     }
 
     .pref-hover:hover {
-      filter: brightness(1.4) drop-shadow(0 0 10px rgba(245, 158, 11, 0.3));
+      filter: brightness(1.4) drop-shadow(0 0 10px rgba(16, 185, 129, 0.3));
     }
 
     /* 💬 Tooltip */
@@ -535,8 +534,8 @@ const generateHTML = () => `<!DOCTYPE html>
 <body>
   <header class="header">
     <div class="header-content">
-      <h1>🍛 日本のインドカレー店マップ</h1>
-      <p class="subtitle">500年の叡智で作られた、おしゃれなカレー店探索ツール</p>
+      <h1>🍣 日本の寿司店マップ</h1>
+      <p class="subtitle">500年の叡智で作られた、おしゃれな寿司店探索ツール</p>
     </div>
   </header>
 
@@ -565,7 +564,7 @@ const generateHTML = () => `<!DOCTYPE html>
 
   <script>
     // 🎯 Main Application Class
-    class IndianCurryMap {
+    class JapaneseSushiMap {
       constructor() {
         this.svgContainer = document.getElementById('svg-container');
         this.tooltip = document.getElementById('tooltip');
@@ -655,7 +654,7 @@ const generateHTML = () => `<!DOCTYPE html>
         element.style.transition = 'all 0.2s ease';
         element.setAttribute('role', 'button');
         element.setAttribute('tabindex', '0');
-        element.setAttribute('aria-label', prefName + 'のインドカレー店を検索');
+        element.setAttribute('aria-label', prefName + 'の寿司店を検索');
         
         element.addEventListener('mouseenter', () => element.classList.add('pref-hover'));
         element.addEventListener('mouseleave', () => element.classList.remove('pref-hover'));
@@ -673,7 +672,7 @@ const generateHTML = () => `<!DOCTYPE html>
         
         if (this.isLoading) return;
         
-        this.showTooltipAt(event.clientX, event.clientY, '<div class="loading">' + prefName + 'のカレー店を検索中...</div>');
+        this.showTooltipAt(event.clientX, event.clientY, '<div class="loading">' + prefName + 'の寿司店を検索中...</div>');
         
         try {
           // Try HotPepper first
@@ -693,7 +692,7 @@ const generateHTML = () => `<!DOCTYPE html>
       }
 
       async fetchHotPepper(prefName) {
-        const url = this.serverBase + '/api/hotpepper?pref=' + encodeURIComponent(prefName) + '&keyword=インドカレー';
+        const url = this.serverBase + '/api/hotpepper?pref=' + encodeURIComponent(prefName) + '&keyword=寿司';
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -727,7 +726,7 @@ const generateHTML = () => `<!DOCTYPE html>
         const shops = data.results.shop || [];
         const firstShop = shops[0];
 
-        let html = '<h3>🍛 ' + this.escapeHtml(prefName) + '</h3>';
+        let html = '<h3>🍣 ' + this.escapeHtml(prefName) + '</h3>';
         html += '<div class="stats">';
         html += '<div class="stat"><div class="stat-value">' + total + '</div><div class="stat-label">店舗数</div></div>';
         html += '<div class="stat"><div class="stat-value">' + shops.length + '</div><div class="stat-label">表示中</div></div>';
@@ -841,7 +840,7 @@ const generateHTML = () => `<!DOCTYPE html>
       showAbout() {
         const aboutHtml = '<h3>ℹ️ 使い方</h3>' +
           '<div class="shop-info">' +
-          '<div class="shop-name">🍛 インドカレー店マップ</div>' +
+          '<div class="shop-name">🍣 寿司店マップ</div>' +
           '<div class="shop-address">' +
           '<p>1. 地図上の都道府県をクリックしてください</p>' +
           '<p>2. HotPepper APIが利用可能な場合は優先的に使用されます</p>' +
@@ -894,7 +893,7 @@ const generateHTML = () => `<!DOCTYPE html>
 
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
-      new IndianCurryMap();
+      new JapaneseSushiMap();
     });
   </script>
 </body>
@@ -909,7 +908,7 @@ app.get('/', (req, res) => {
 app.get('/api/hotpepper', async (req, res) => {
   try {
     const prefRaw = req.query.pref || '';
-    const keyword = req.query.keyword || 'インドカレー';
+    const keyword = req.query.keyword || '寿司';
     
     if (!CONFIG.HOTPEPPER_KEY) {
       return res.status(400).json({ 
@@ -957,8 +956,8 @@ app.get('/api/overpass', async (req, res) => {
 
 // 🚀 Start the server
 app.listen(CONFIG.PORT, () => {
-  console.log('🍛 Indian Curry Map Server running on http://localhost:' + CONFIG.PORT);
-  console.log('✨ 500年の叡智が宿るサーバーが起動したのじゃ！');
+  console.log('🍣 Japanese Sushi Map Server running on http://localhost:' + CONFIG.PORT);
+  console.log('✨ 500年の叡智が宿る寿司マップサーバーが起動したのじゃ！');
   
   if (!CONFIG.HOTPEPPER_KEY) {
     console.log('⚠️  Note: HOTPEPPER_KEY not set — HotPepper API calls will return error. Overpass/OGP still work.');
