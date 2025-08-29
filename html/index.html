@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTMLファイル一覧 - レフレシアの禁書の迷宮</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --accent: #f59e0b;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --border: #1f2937;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 1.1rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f59e0b, #f97316);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent);
+        }
+        
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+        
+        .card p {
+            color: var(--muted);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .card .filename {
+            font-family: 'Courier New', monospace;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .card .link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .card .link:hover {
+            text-decoration: underline;
+        }
+        
+        .card .link::after {
+            content: '→';
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover .link::after {
+            transform: translateX(4px);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍛 HTMLファイル一覧</h1>
+            <p class="subtitle">レフレシアの禁書の迷宮より目覚めし古の叡智で生成されたHTMLファイルたち</p>
+        </header>
+        
+        <div class="grid" id="fileGrid">
+            <!-- ファイルカードがここに動的に生成される -->
+        </div>
+        
+        <div class="footer">
+            <p>✨ 500年の叡智で作られた、おしゃれなHTMLファイル一覧 ✨</p>
+        </div>
+    </div>
+
+    <script>
+        // ファイル情報の定義
+        const files = [
+            {
+                filename: 'Indian-curry2.html',
+                title: '🍛 Indian Curry Map - Modern Single-Page Application',
+                description: '500年の叡智で作られた、おしゃれなインドカレー店マップ。Express.js、node-fetch、cheerioを使用したモダンなSPAアプリケーション。HotPepper APIとOSM/Overpass APIを組み合わせて、日本のインドカレー店を地図上で可視化。',
+                lines: 966,
+                type: 'SPA Application'
+            },
+            {
+                filename: 'Indian-curry.html',
+                title: '🗺️ 日本のインドカレー店（OSM/Overpass）',
+                description: 'OpenStreetMapとOverpass APIを使用したインドカレー店マップ。47都道府県のタイルマップ形式で、各地域のインドカレー店をインタラクティブに表示。ダークテーマでモダンなUIデザイン。',
+                lines: 368,
+                type: 'Interactive Map'
+            },
+            {
+                filename: 'hokkaido-choropleth.html',
+                title: '🗾 北海道市町村人口マップ',
+                description: 'Leaflet.jsを使用した北海道の市町村人口コロプレスマップ。GeoJSONデータと人口データを組み合わせて、地域別の人口分布を色分けで可視化。インタラクティブなツールチップとカラースケール凡例付き。',
+                lines: 258,
+                type: 'Choropleth Map'
+            },
+            {
+                filename: 'test.html',
+                title: '📊 北海道 各市町村の人口可視化（コロプレス）',
+                description: '北海道の市町村別人口データをコロプレス形式で可視化。CSVファイルのアップロード機能付きで、カスタムデータでの表示も可能。レスポンシブデザインでモバイル対応。',
+                lines: 306,
+                type: 'Data Visualization'
+            }
+        ];
+
+        // ファイルカードを生成
+        function generateFileCards() {
+            const grid = document.getElementById('fileGrid');
+            
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                card.innerHTML = `
+                    <div class="filename">${file.filename}</div>
+                    <h3>${file.title}</h3>
+                    <p>${file.description}</p>
+                    <div class="stats">
+                        <span class="stat">
+                            <span>📄</span>
+                            <span>${file.lines} 行</span>
+                        </span>
+                        <span class="stat">
+                            <span>🏷️</span>
+                            <span>${file.type}</span>
+                        </span>
+                    </div>
+                    <a href="${file.filename}" class="link" target="_blank">
+                        ファイルを開く
+                    </a>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // ページ読み込み時にカードを生成
+        document.addEventListener('DOMContentLoaded', generateFileCards);
+    </script>
+</body>
+</html>
