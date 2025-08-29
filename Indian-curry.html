@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>日本のインドカレー店（OSM/Overpass）</title>
+<style>
+  :root {
+    --bg: #0f172a;            /* slate-900 */
+    --card: #111827;          /* gray-900 */
+    --tile: #1f2937;          /* gray-800 */
+    --tile-hover: #334155;    /* slate-700 */
+    --accent: #f59e0b;        /* amber-500 */
+    --text: #e5e7eb;          /* gray-200 */
+    --muted: #94a3b8;         /* slate-400 */
+    --ok: #10b981;            /* emerald-500 */
+    --warn: #f59e0b;          /* amber-500 */
+    --err: #ef4444;           /* red-500 */
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  }
+  header{
+    max-width:1100px;
+    margin:24px auto 8px;
+    padding:0 16px;
+  }
+  h1{margin:0 0 8px;font-size:clamp(20px,3vw,28px)}
+  p.lead{margin:0;color:var(--muted)}
+  .wrap{
+    max-width:1100px;
+    margin:16px auto 40px;
+    padding:16px;
+  }
+  .panel{
+    background:var(--card);
+    border:1px solid #1f2937;
+    border-radius:16px;
+    padding:16px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25);
+  }
+  .controls{
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px
+  }
+  .hint{color:var(--muted);font-size:13px}
+  .grid{
+    display:grid;
+    /* 47都道府県タイルマップ（おおよその位置関係で並べたグリッド） */
+    grid-template-columns: repeat(11, minmax(62px, 1fr));
+    gap:6px;
+  }
+  .tile{
+    background:var(--tile);
+    border:1px solid #0b1020;
+    border-radius:12px;
+    padding:8px;
+    min-height:64px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    cursor:pointer;
+    transition:transform .1s ease, background .1s ease, border-color .1s ease;
+    position:relative;
+  }
+  .tile:hover{ background:var(--tile-hover); transform:translateY(-1px); border-color:#223; }
+  .tile .name{font-size:12px;font-weight:600;letter-spacing:.02em}
+  .tile .count{font-size:12px;color:var(--muted)}
+  .tile.loading .count::after{content:" 取得中…"}
+  .badge{
+    position:absolute; top:6px; right:6px;
+    font-size:10px; padding:2px 6px; border-radius:999px;
+    background:#0b1020; color:var(--muted); border:1px solid #1f2937;
+  }
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 0}
+  .legend span{font-size:12px;color:var(--muted)}
+  .legend .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #223;background:#0b1020}
+  /* ポップアップ(ツールチップ) */
+  .tooltip{
+    position:fixed; z-index:50; max-width:360px;
+    background:#0b1020; color:var(--text);
+    border:1px solid #223; border-radius:12px; padding:12px 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    display:none;
+  }
+  .tooltip h3{margin:0 0 6px;font-size:16px}
+  .tooltip p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
+  .tooltip .meta{display:flex;gap:8px;margin-top:8px}
+  .tooltip .meta a{color:var(--accent);text-decoration:none;font-size:12px}
+  .tooltip .kpi{margin-top:8px;font-size:12px;color:var(--muted)}
+  footer{max-width:1100px;margin:12px auto 40px;padding:0 16px;color:var(--muted);font-size:12px}
+  code{background:#0b1020;border:1px solid #223;padding:1px 6px;border-radius:6px}
+  button{
+    background:transparent;border:1px solid #223;border-radius:10px;
+    color:var(--text);padding:6px 10px;cursor:pointer
+  }
+  button:hover{background:#0b1020}
+</style>
+</head>
+<body>
+  <header>
+    <h1>日本のインドカレー店（OSM/Overpass API）</h1>
+    <p class="lead">都道府県タイルにカーソルを載せる（タップする）と、その都道府県のインドカレー店を検索して件数と代表店を表示します。</p>
+  </header>
+
+  <div class="wrap">
+    <div class="panel">
+      <div class="controls">
+        <button id="toggle-hover">ホバーで自動取得：<span id="hover-state">ON</span></button>
+        <button id="clear-cache">キャッシュをクリア</button>
+        <span class="hint">※ 過度な連続アクセスはOverpassの制限に当たることがあります。</span>
+      </div>
+
+      <div id="grid" class="grid" aria-live="polite"></div>
+
+      <div class="legend">
+        <span><span class="pill">件数</span> タイル右上に表示</span>
+        <span><span class="pill">代表店</span> = 最初に得られた店舗（OSMに人気度の概念はありません）</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip" class="tooltip" role="dialog" aria-modal="false"></div>
+
+  <footer>
+    データ: OpenStreetMap contributors / Overpass API（<code>amenity=restaurant</code> &amp; <code>cuisine=indian|curry</code>）. 画像は未提供のため表示しません。
+  </footer>
+
+<script>
+/** =========================
+ *  都道府県データ（名前とJISコード）
+ *  ========================= */
+const PREFS = [
+  {code:"01", name:"北海道"}, {code:"02", name:"青森県"}, {code:"03", name:"岩手県"},
+  {code:"04", name:"宮城県"}, {code:"05", name:"秋田県"}, {code:"06", name:"山形県"},
+  {code:"07", name:"福島県"}, {code:"08", name:"茨城県"}, {code:"09", name:"栃木県"},
+  {code:"10", name:"群馬県"}, {code:"11", name:"埼玉県"}, {code:"12", name:"千葉県"},
+  {code:"13", name:"東京都"}, {code:"14", name:"神奈川県"}, {code:"15", name:"新潟県"},
+  {code:"16", name:"富山県"}, {code:"17", name:"石川県"}, {code:"18", name:"福井県"},
+  {code:"19", name:"山梨県"}, {code:"20", name:"長野県"}, {code:"21", name:"岐阜県"},
+  {code:"22", name:"静岡県"}, {code:"23", name:"愛知県"}, {code:"24", name:"三重県"},
+  {code:"25", name:"滋賀県"}, {code:"26", name:"京都府"}, {code:"27", name:"大阪府"},
+  {code:"28", name:"兵庫県"}, {code:"29", name:"奈良県"}, {code:"30", name:"和歌山県"},
+  {code:"31", name:"鳥取県"}, {code:"32", name:"島根県"}, {code:"33", name:"岡山県"},
+  {code:"34", name:"広島県"}, {code:"35", name:"山口県"}, {code:"36", name:"徳島県"},
+  {code:"37", name:"香川県"}, {code:"38", name:"愛媛県"}, {code:"39", name:"高知県"},
+  {code:"40", name:"福岡県"}, {code:"41", name:"佐賀県"}, {code:"42", name:"長崎県"},
+  {code:"43", name:"熊本県"}, {code:"44", name:"大分県"}, {code:"45", name:"宮崎県"},
+  {code:"46", name:"鹿児島県"}, {code:"47", name:"沖縄県"},
+];
+
+/** =========================
+ *  タイルマップのレイアウト（行優先、空白は""）
+ *  おおよそ日本列島の形を意識した並び
+ *  ========================= */
+const TILE_LAYOUT = [
+  ["", "", "", "北海道", "", "", "", "", "", "", ""],
+  ["", "", "青森県", "岩手県", "", "", "", "", "", "", ""],
+  ["", "秋田県", "山形県", "宮城県", "", "", "", "", "", "", ""],
+  ["", "新潟県", "福島県", "", "", "", "", "", "", "", ""],
+  ["富山県", "石川県", "福井県", "長野県", "群馬県", "栃木県", "", "", "", "", ""],
+  ["", "岐阜県", "山梨県", "埼玉県", "茨城県", "", "", "", "", "", ""],
+  ["", "滋賀県", "三重県", "愛知県", "静岡県", "東京都", "千葉県", "神奈川県", "", "", ""],
+  ["", "京都府", "奈良県", "大阪府", "和歌山県", "", "", "", "", "", ""],
+  ["", "鳥取県", "岡山県", "兵庫県", "", "", "", "", "", "", ""],
+  ["", "島根県", "広島県", "", "", "", "", "", "", "", ""],
+  ["", "", "山口県", "", "徳島県", "香川県", "愛媛県", "高知県", "", "", ""],
+  ["", "", "", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", ""],
+  ["", "", "", "", "", "", "", "", "", "沖縄県", ""],
+];
+
+/** =========================
+ *  UI生成
+ *  ========================= */
+const gridEl = document.getElementById('grid');
+const tooltip = document.getElementById('tooltip');
+const state = { hoverFetch: true };
+const cache = new Map(); // key: prefecture name, value: {count, first, ts}
+
+function makeTile(prefName){
+  const code = PREFS.find(p=>p.name===prefName)?.code || "";
+  const tile = document.createElement('div');
+  tile.className = 'tile';
+  tile.dataset.pref = prefName;
+  tile.innerHTML = `
+    <div class="badge">${code || "--"}</div>
+    <div class="name">${prefName}</div>
+    <div class="count">件数: <span class="v">-</span></div>
+  `;
+  // イベント
+  tile.addEventListener('mouseenter', (e)=> state.hoverFetch && handleFetchAndShow(e.currentTarget, e));
+  tile.addEventListener('mousemove', positionTooltip);
+  tile.addEventListener('mouseleave', hideTooltip);
+  tile.addEventListener('click', (e)=> handleFetchAndShow(e.currentTarget, e));
+  return tile;
+}
+
+function buildGrid(){
+  TILE_LAYOUT.forEach(row=>{
+    row.forEach(cell=>{
+      const holder = document.createElement('div');
+      if(cell){
+        holder.replaceWith(makeTile(cell));
+        gridEl.appendChild(makeTile(cell));
+      }else{
+        const spacer = document.createElement('div');
+        spacer.style.visibility='hidden';
+        spacer.style.minHeight='64px';
+        gridEl.appendChild(spacer);
+      }
+    });
+  });
+}
+buildGrid();
+
+/** =========================
+ *  Overpassクエリ
+ *  ========================= */
+function overpassQuery(prefName){
+  // admin_level=4 は都道府県境界
+  const q = `
+[out:json][timeout:25];
+area["name"="${prefName}"]["boundary"="administrative"]["admin_level"="4"]->.searchArea;
+(
+  node["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+  way["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+  relation["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+);
+out tags center;
+`;
+  const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(q);
+  return fetch(url).then(r=>{
+    if(!r.ok) throw new Error("Overpass Error: "+r.status);
+    return r.json();
+  });
+}
+
+function buildAddress(tags, fallbackPref){
+  // OSMは住所の粒度がまちまちなので、持っている情報をつなぐ
+  const parts = [
+    tags["addr:prefecture"] || fallbackPref || "",
+    tags["addr:city"] || "",
+    tags["addr:ward"] || "",
+    tags["addr:district"] || "",
+    tags["addr:suburb"] || "",
+    tags["addr:neighbourhood"] || "",
+    tags["addr:street"] || "",
+    tags["addr:block"] || "",
+    tags["addr:housenumber"] || "",
+    tags["addr:full"] || ""
+  ].filter(Boolean);
+  // addr:full があると重複することがあるので重複除去
+  const uniq = [];
+  for(const p of parts){ if(!uniq.includes(p)) uniq.push(p); }
+  const joined = uniq.join('');
+  return joined || "(住所情報なし)";
+}
+
+/** =========================
+ *  取得 & 表示
+ *  ========================= */
+async function handleFetchAndShow(tile, ev){
+  const pref = tile.dataset.pref;
+  const countEl = tile.querySelector('.v');
+
+  // キャッシュがあればそれを使う
+  if(cache.has(pref)){
+    const data = cache.get(pref);
+    countEl.textContent = data.count;
+    showTooltip(pref, data, ev);
+    return;
+  }
+
+  // 取得中UI
+  tile.classList.add('loading');
+
+  try{
+    const json = await overpassQuery(pref);
+    const elements = json.elements || [];
+    const count = elements.length;
+
+    // 代表店（最初の要素）
+    const first = elements[0] || null;
+    const firstName = first?.tags?.name || "(店名不明)";
+    const lat = first?.lat || first?.center?.lat;
+    const lon = first?.lon || first?.center?.lon;
+
+    const addr = first?.tags ? buildAddress(first.tags, pref) : "(住所情報なし)";
+
+    const osmLink = (lat && lon)
+      ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=18/${lat}/${lon}`
+      : `https://www.openstreetmap.org/search?query=${encodeURIComponent(firstName)}`;
+
+    const payload = { count, first: { name:firstName, addr, lat, lon, osmLink }, ts: Date.now() };
+    cache.set(pref, payload);
+
+    countEl.textContent = count;
+    showTooltip(pref, payload, ev);
+  }catch(err){
+    countEl.textContent = "エラー";
+    showTooltip(pref, { error: err.message }, ev);
+  }finally{
+    tile.classList.remove('loading');
+  }
+}
+
+function showTooltip(prefName, data, ev){
+  tooltip.style.display = 'block';
+  if(data?.error){
+    tooltip.innerHTML = `
+      <h3>${prefName}</h3>
+      <p style="color:var(--err)">取得に失敗しました: ${escapeHtml(data.error)}</p>
+    `;
+  }else{
+    const c = data.count ?? 0;
+    const first = data.first;
+    tooltip.innerHTML = `
+      <h3>${prefName} のインドカレー店</h3>
+      <div class="kpi">件数: <strong>${c}</strong></div>
+      ${first ? `
+        <p style="margin-top:6px"><strong>代表店</strong>: ${escapeHtml(first.name)}</p>
+        <p>${escapeHtml(first.addr)}</p>
+        <div class="meta">
+          <a href="${first.osmLink}" target="_blank" rel="noopener">OSMで見る</a>
+        </div>
+      ` : `<p>店舗データが見つかりませんでした。</p>`}
+      <p class="kpi">データ: OpenStreetMap / Overpass</p>
+    `;
+  }
+  positionTooltip(ev);
+}
+
+function positionTooltip(ev){
+  const pad = 12;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const rect = { w: tooltip.offsetWidth, h: tooltip.offsetHeight };
+  let x = ev.clientX + pad;
+  let y = ev.clientY + pad;
+  if(x + rect.w + pad > vw) x = ev.clientX - rect.w - pad;
+  if(y + rect.h + pad > vh) y = ev.clientY - rect.h - pad;
+  tooltip.style.left = Math.max(8, x) + 'px';
+  tooltip.style.top  = Math.max(8, y) + 'px';
+}
+
+function hideTooltip(){
+  tooltip.style.display = 'none';
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+}
+
+/** =========================
+ *  コントロール
+ *  ========================= */
+document.getElementById('toggle-hover').addEventListener('click', ()=>{
+  state.hoverFetch = !state.hoverFetch;
+  document.getElementById('hover-state').textContent = state.hoverFetch ? "ON" : "OFF";
+});
+document.getElementById('clear-cache').addEventListener('click', ()=>{
+  cache.clear();
+  document.querySelectorAll('.tile .v').forEach(v=> v.textContent='-');
+});
+
+</script>
+</body>
+</html>

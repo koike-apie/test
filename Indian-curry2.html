@@ -1,0 +1,351 @@
+// app.js — Single-file server + frontend
+// Node でこれを起動するとローカルにサーバーが立ち、1ページで動きます。
+// Dependencies: express, node-fetch@2, cheerio
+//
+// Install:
+//   npm i express node-fetch@2 cheerio
+//
+// Run:
+//   HOTPEPPER_KEY=your_key node app.js
+
+const express = require('express');
+const fetch = require('node-fetch');
+const cheerio = require('cheerio');
+const app = express();
+const PORT = process.env.PORT || 3000;
+const HOTPEPPER_KEY = process.env.HOTPEPPER_KEY || '';
+
+// Allow large responses if needed
+app.use(express.json({ limit: '2mb' }));
+
+// Simple CORS for convenience (development)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
+/**
+ * Helper: fetch remote text
+ */
+async function fetchText(url, opts = {}) {
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`Fetch ${url} failed: ${r.status}`);
+  return r.text();
+}
+
+/**
+ * Route: Serve the single-page app (front-end HTML embedded here)
+ * This HTML will fetch the SVG from geolonia on load and attach listeners.
+ */
+app.get('/', (req, res) => {
+  const html = `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>日本のインドカレー店マップ（1ファイル版）</title>
+<style>
+  :root{--bg:#071025;--card:#0b1220;--accent:#f59e0b;--muted:#98a6bd;--text:#eaf2ff}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}
+  header{padding:18px;max-width:1200px;margin:0 auto}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:6px 0 0;color:var(--muted)}
+  #map-wrap{max-width:1200px;margin:18px auto;padding:12px}
+  #svg-container{background:linear-gradient(180deg,#061022 0%, #05101a 100%);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+  svg{width:100%;height:auto;display:block}
+  .pref-hover{fill:var(--accent) !important; cursor:pointer; transition:fill .12s}
+  .tooltip{position:fixed;z-index:9999;background:rgba(6,10,18,0.98);color:var(--text);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);display:none;max-width:420px;box-shadow:0 12px 40px rgba(2,6,23,0.6)}
+  .tooltip h3{margin:0 0 6px;font-size:16px}
+  .tooltip p{margin:0;color:var(--muted);font-size:13px}
+  .controls{max-width:1200px;margin:0 auto;padding:0 12px 12px;display:flex;gap:8px;align-items:center}
+  button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
+  .small{font-size:13px;color:var(--muted)}
+  img.shop-photo{max-width:100%;border-radius:8px;margin-top:8px}
+  .meta{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  a.link{color:var(--accent);text-decoration:none}
+  footer{max-width:1200px;margin:12px auto 40px;padding:0 12px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>日本のインドカレー店マップ（HotPepper / Overpass / OGP）</h1>
+  <p class="lead">都道府県をクリックすると上位のインドカレー店を取得してポップアップ表示します。HotPepperキーがある場合は優先的に使用します。</p>
+</header>
+
+<div class="controls">
+  <button id="btn-refresh">SVG 再読み込み</button>
+  <div class="small">Server: ${HOTPEPPER_KEY ? 'HotPepper有効' : 'HotPepper無効'} ・ OGPプロキシ / Overpass対応</div>
+</div>
+
+<div id="map-wrap">
+  <div id="svg-container">SVGを読み込んでいます…</div>
+</div>
+
+<div id="tooltip" class="tooltip" role="dialog" aria-live="polite"></div>
+
+<script>
+const svgContainer = document.getElementById('svg-container');
+const tooltip = document.getElementById('tooltip');
+const SERVER_BASE = location.origin;
+const SVG_RAW = 'https://raw.githubusercontent.com/geolonia/japanese-prefectures/master/svg/japan.svg';
+
+// fetch and inject SVG
+async function loadSvg(){
+  svgContainer.innerHTML = '読み込み中…';
+  try{
+    const r = await fetch(SVG_RAW);
+    if(!r.ok) throw new Error('SVG取得失敗:'+r.status);
+    const txt = await r.text();
+    // Some SVGs may have scripts/styles; we insert as-is but sanitize basic script tags by removing them
+    const clean = txt.replace(/<script[\\s\\S]*?<\\/script>/gi, '');
+    svgContainer.innerHTML = clean;
+    attachListeners();
+  }catch(e){
+    svgContainer.innerHTML = '<div style="padding:18px;background:#051222;border-radius:8px;color:#f8d7da">SVG読み込みエラー: '+e.message+'</div>';
+    console.error(e);
+  }
+}
+
+function attachListeners(){
+  const svg = svgContainer.querySelector('svg');
+  if(!svg) return;
+  // find candidate elements representing prefectures
+  const candidates = svg.querySelectorAll('[data-code], [data-name], path, g, polygon, rect');
+  candidates.forEach(el=>{
+    // try to get a readable pref name
+    let pref = el.getAttribute('data-name') || el.getAttribute('data-pref') || el.getAttribute('data-code') || el.id || '';
+    if(!pref){
+      const title = el.querySelector ? el.querySelector('title') : null;
+      if(title) pref = title.textContent || '';
+    }
+    pref = (pref || '').trim();
+    if(pref){
+      // attach events
+      el.style.transition = 'fill .12s';
+      el.addEventListener('mouseenter', ()=> el.classList.add('pref-hover'));
+      el.addEventListener('mouseleave', ()=> el.classList.remove('pref-hover'));
+      el.addEventListener('click', (ev)=> onPrefClick(ev, pref, el));
+      // add role for accessibility
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      el.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onPrefClick(e, pref, el); });
+    }
+  });
+}
+
+// main click handler: request server-side HotPepper (or fallback to Overpass)
+async function onPrefClick(ev, rawPref, el){
+  ev.stopPropagation();
+  showTooltipAt(ev.clientX, ev.clientY, '<div>取得中…</div>');
+  try{
+    // Try HotPepper first
+    const hpUrl = SERVER_BASE + '/api/hotpepper?pref=' + encodeURIComponent(rawPref) + '&keyword=' + encodeURIComponent('インドカレー');
+    const r = await fetch(hpUrl);
+    if(r.ok){
+      const j = await r.json();
+      if(j && (j.results && (j.results.shop && j.results.shop.length > 0) || j.total_hit_count > 0)){
+        renderHotPepper(ev.clientX, ev.clientY, rawPref, j);
+        return;
+      }
+    }
+    // fallback to Overpass (OSM)
+    const ov = await fetch(SERVER_BASE + '/api/overpass?pref=' + encodeURIComponent(rawPref));
+    if(!ov.ok) throw new Error('Overpassエラー:'+ov.status);
+    const oj = await ov.json();
+    renderOverpass(ev.clientX, ev.clientY, rawPref, oj);
+  }catch(err){
+    showTooltipAt(ev.clientX, ev.clientY, '<div style="color:#ffb4b4">取得失敗: '+escapeHtml(err.message)+'</div>');
+  }
+}
+
+function renderHotPepper(x,y,pref,data){
+  const total = data.results.results_available || data.total_hit_count || (data.results.shop ? data.results.shop.length : 0);
+  const shops = data.results.shop || [];
+  const first = shops[0];
+  let html = '<h3>'+escapeHtml(pref)+'</h3>';
+  html += '<p class="small">件数: <strong>'+total+'</strong></p>';
+  if(first){
+    html += '<div style="margin-top:8px"><strong>代表店</strong>: '+escapeHtml(first.name)+'</div>';
+    html += '<div class="small" style="margin-top:6px">'+escapeHtml(first.address)+'</div>';
+    if(first.photo && first.photo.mobile && first.photo.mobile.s){
+      html += '<img class="shop-photo" src="'+first.photo.mobile.s+'" alt="'+escapeHtml(first.name)+'">';
+    } else if(first.urls && first.urls.pc){
+      const shopUrl = first.urls.pc;
+      html += '<div class="meta"><a class="link" href="'+shopUrl+'" target="_blank" rel="noopener">店舗ページ</a>';
+      html += '<button style="margin-left:6px;" onclick="fetchOGPAndShow(\\''+encodeURIComponent(shopUrl)+'\\')">OGP取得</button></div>';
+    }
+  } else {
+    html += '<div style="margin-top:8px">店舗が見つかりませんでした。</div>';
+  }
+  showTooltipAt(x,y,html);
+}
+
+function renderOverpass(x,y,pref,data){
+  const elements = data.elements || [];
+  const count = elements.length;
+  let html = '<h3>'+escapeHtml(pref)+'</h3>';
+  html += '<p class="small">OSM 件数: <strong>'+count+'</strong></p>';
+  if(count>0){
+    const e = elements[0];
+    const name = (e.tags && e.tags.name) ? e.tags.name : '(店名不明)';
+    const addr = buildAddressFromTags(e.tags || {}, pref);
+    const lat = e.lat || (e.center && e.center.lat);
+    const lon = e.lon || (e.center && e.center.lon);
+    html += '<div style="margin-top:8px"><strong>代表店</strong>: '+escapeHtml(name)+'</div>';
+    html += '<div class="small">'+escapeHtml(addr)+'</div>';
+    if(lat && lon){
+      html += '<div class="meta"><a class="link" href="https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=18/'+lat+'/'+lon+'" target="_blank" rel="noopener">OSMで開く</a></div>';
+    }
+  } else {
+    html += '<div style="margin-top:8px">店舗が見つかりませんでした。</div>';
+  }
+  showTooltipAt(x,y,html);
+}
+
+function buildAddressFromTags(tags, fallbackPref){
+  const parts = [
+    tags['addr:prefecture']||fallbackPref||'',
+    tags['addr:city']||'',
+    tags['addr:ward']||'',
+    tags['addr:street']||'',
+    tags['addr:housenumber']||'',
+    tags['addr:full']||''
+  ].filter(Boolean);
+  const uniq = Array.from(new Set(parts));
+  return uniq.join(' ');
+}
+
+async function fetchOGPAndShow(encodedUrl){
+  try{
+    const raw = decodeURIComponent(encodedUrl);
+    const r = await fetch(SERVER_BASE + '/api/ogp?url=' + encodeURIComponent(raw));
+    if(!r.ok) throw new Error('OGP取得エラー:'+r.status);
+    const j = await r.json();
+    if(j.image){
+      showTooltipAt(window.innerWidth/2, window.innerHeight/2, '<div style="text-align:center"><img class="shop-photo" src="'+j.image+'"><div style="margin-top:8px">OGP画像</div></div>');
+    } else {
+      alert('OGP画像が見つかりませんでした');
+    }
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+function showTooltipAt(x,y,html){
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = html;
+  const pad = 12;
+  const w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+  let tx = x + pad, ty = y + pad;
+  if(tx + w > window.innerWidth) tx = x - w - pad;
+  if(ty + h > window.innerHeight) ty = y - h - pad;
+  tooltip.style.left = Math.max(8, tx)+'px';
+  tooltip.style.top = Math.max(8, ty)+'px';
+}
+function hideTooltip(){ tooltip.style.display='none'; }
+function escapeHtml(s){ return String(s).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',\"'\":'&#39;','\"':'&quot;'})[c]); }
+
+document.getElementById('btn-refresh').addEventListener('click', ()=>loadSvg());
+
+// initial
+loadSvg();
+</script>
+</body>
+</html>`;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+/**
+ * API: HotPepper proxy
+ * GET /api/hotpepper?pref=都道府県名&keyword=インドカレー
+ * Returns HotPepper JSON as-is. Requires HOTPEPPER_KEY env var.
+ */
+app.get('/api/hotpepper', async (req, res) => {
+  const prefRaw = req.query.pref || '';
+  const keyword = req.query.keyword || 'インドカレー';
+  if (!HOTPEPPER_KEY) {
+    return res.status(400).json({ error: 'HOTPEPPER_KEY not configured on server.' });
+  }
+
+  // map japanese name to PREFxx
+  const prefMap = {
+    '北海道':'PREF01','青森県':'PREF02','岩手県':'PREF03','宮城県':'PREF04','秋田県':'PREF05','山形県':'PREF06','福島県':'PREF07','茨城県':'PREF08','栃木県':'PREF09','群馬県':'PREF10','埼玉県':'PREF11','千葉県':'PREF12','東京都':'PREF13','神奈川県':'PREF14','新潟県':'PREF15','富山県':'PREF16','石川県':'PREF17','福井県':'PREF18','山梨県':'PREF19','長野県':'PREF20','岐阜県':'PREF21','静岡県':'PREF22','愛知県':'PREF23','三重県':'PREF24','滋賀県':'PREF25','京都府':'PREF26','大阪府':'PREF27','兵庫県':'PREF28','奈良県':'PREF29','和歌山県':'PREF30','鳥取県':'PREF31','島根県':'PREF32','岡山県':'PREF33','広島県':'PREF34','山口県':'PREF35','徳島県':'PREF36','香川県':'PREF37','愛媛県':'PREF38','高知県':'PREF39','福岡県':'PREF40','佐賀県':'PREF41','長崎県':'PREF42','熊本県':'PREF43','大分県':'PREF44','宮崎県':'PREF45','鹿児島県':'PREF46','沖縄県':'PREF47'
+  };
+  let prefParam = '';
+  if (/^PREF\\d{2}$/.test(prefRaw)) prefParam = prefRaw;
+  else if (/^\\d{1,2}$/.test(prefRaw)) prefParam = 'PREF' + prefRaw.padStart(2,'0');
+  else prefParam = prefMap[prefRaw] || '';
+
+  const hpUrl = 'http://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=' + encodeURIComponent(HOTPEPPER_KEY)
+    + '&format=json&keyword=' + encodeURIComponent(keyword)
+    + (prefParam ? ('&pref=' + encodeURIComponent(prefParam)) : '')
+    + '&count=20';
+
+  try{
+    const r = await fetch(hpUrl);
+    const j = await r.json();
+    res.json(j);
+  }catch(err){
+    console.error(err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * API: OGP proxy
+ * GET /api/ogp?url=...
+ * Returns { image: absoluteUrl | null }
+ */
+app.get('/api/ogp', async (req, res) => {
+  const raw = req.query.url;
+  if (!raw) return res.status(400).json({ error: 'url required' });
+  try {
+    const r = await fetch(raw, { headers: { 'User-Agent': 'OGP-Fetcher/1.0' } });
+    const html = await r.text();
+    const $ = cheerio.load(html);
+    const og = $('meta[property="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content');
+    if (!og) return res.json({ image: null });
+    const imgUrl = new URL(og, raw).href;
+    res.json({ image: imgUrl });
+  } catch (err) {
+    console.error('OGP fetch error', err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+/**
+ * API: Overpass proxy by prefecture name
+ * GET /api/overpass?pref=都道府県名
+ * Returns Overpass JSON (elements)
+ */
+app.get('/api/overpass', async (req, res) => {
+  const pref = req.query.pref || '';
+  if (!pref) return res.status(400).json({ error: 'pref required' });
+  // Build Overpass Q: area by name admin_level=4 then find restaurant with cuisine indian or curry
+  const q = `
+[out:json][timeout:25];
+area["name"="${pref}"]["boundary"="administrative"]["admin_level"="4"]->.searchArea;
+(
+  node["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+  way["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+  relation["amenity"="restaurant"]["cuisine"~"^indian$|^curry$"](area.searchArea);
+);
+out tags center;`;
+  const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q);
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('Overpass error: ' + r.status);
+    const j = await r.json();
+    res.json(j);
+  }catch(err){
+    console.error(err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// Start
+app.listen(PORT, () => {
+  console.log('Server running on http://localhost:' + PORT);
+  if (!HOTPEPPER_KEY) console.log('Note: HOTPEPPER_KEY not set — HotPepper API calls will return error. Overpass/OGP still work.');
+});
