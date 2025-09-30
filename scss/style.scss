@@ -1,0 +1,76 @@
+// テスト用のSCSSファイル
+// Live Sass Compilerでコンパイルされることを確認するためのサンプル
+
+$primary-color: #3498db;
+$secondary-color: #2ecc71;
+$font-size-base: 16px;
+
+body {
+  font-family: 'Arial', sans-serif;
+  font-size: $font-size-base;
+  margin: 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.header {
+  background-color: $primary-color;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+}
+
+.button {
+  background-color: $secondary-color;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: $font-size-base;
+  transition: background-color 0.3s ease;
+  
+  &:hover {
+    background-color: darken($secondary-color, 10%);
+  }
+  
+  &.primary {
+    background-color: $primary-color;
+    
+    &:hover {
+      background-color: darken($primary-color, 10%);
+    }
+  }
+}
+
+
+
+
+
+
+// ネストしたセレクタの例
+.card {
+  background: #fff;
+  border: solid 1px #000;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  
+  .card-title {
+    color: $primary-color;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .card-content {
+    color: #666;
+    line-height: 1.6;
+  }
+}
