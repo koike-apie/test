@@ -1,4 +1,20 @@
-@keyframes shiny {
+@keyframes shiny01 {
+  0% {
+      transform: scale(0) rotate(25deg);
+      opacity: 0;
+  }
+
+  50% {
+      transform: scale(1) rotate(25deg);
+      opacity: 1;
+  }
+
+  100% {
+      transform: scale(50) rotate(25deg);
+      opacity: 0;
+  }
+}
+@keyframes shiny02 {
   0% {
       transform: scale(0) rotate(25deg);
       opacity: 0;
@@ -15,20 +31,132 @@
   }
 }
 
-.shiny-btn01 {
+.shiny-btn {
+  width: 100%;
+  max-width: 1000px;
+  padding: 80px 40px;
+  margin: 0 auto;
+  background: #fff;
+}
+.shiny-btn__dtit {
+  padding: 1rem 0 0 0;
+}
+
+.shiny-btn__button {
+  width: 300px;
+}
+.shiny-btn__button01 {
+}
+.shiny-btn__button01 a {
+  display: inline-block;
+  width: 100%;
+  padding: .8rem 0;
+  background-color: #6eb038;
+  border-radius: min(0.5vw, 5px);
+  position: relative;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0px min(0.4vw, 4px) rgb(78.5646551724, 125.7034482759, 39.9965517241);
+  color: #fff;
+}
+.shiny-btn__button01 a::before {
+  content: '';
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 12px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button01 a::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 21px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button01 a:hover {
+  opacity: 0.75;
+  transition: 0.3s ease-in-out;
+}
+
+.shiny-btn__button02 {
+}
+.shiny-btn__button02 a {
+  display: inline-block;
+  width: 100%;
+  padding: .8rem 0;
+  background-color: #6eb038;
+  border-radius: min(0.5vw, 5px);
+  position: relative;
+  transition: 0.3s ease-in-out;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0px min(0.4vw, 4px) rgb(78.5646551724, 125.7034482759, 39.9965517241);
+  color: #fff;
+}
+.shiny-btn__button02 a::before {
+  content: '';
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 12px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button02 a::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 21px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button02 a:hover {
+  box-shadow: 0 2px 0 #0e4e18;
+  transform: translateY(2px);
+}
+.shiny-btn__button02 a:active {
+  box-shadow: unset;
+  transform: translateY(4px);
+}
+
+.shiny-btn__button03 a {
   position: relative;
   display: block;
   width: 100%;
   height: 40px;
   line-height: 40px;
   text-align: center;
-  text-decoration: none;
   color: #ffffff;
   background-color: #384878;
   overflow: hidden;
 }
 
-.shiny-btn01::after {
+.shiny-btn__button03 a::after {
   content: '';
   position: absolute;
   top: -100px;
@@ -36,10 +164,584 @@
   width: 50px;
   height: 50px;
   background-image: linear-gradient(100deg,  rgba(255, 255, 255, 0) 10%, rgba(255, 255, 255, 1) 100%, rgba(255, 255, 255, 0) 0%);
-
-  /* アニメーション */
-  animation-name: shiny;
+  animation-name: shiny01;
   animation-duration: 3s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
+}
+
+.shiny-btn__button04 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.shiny-btn__button04 a {
+  display: inline-block;
+  width: 100%;
+  padding: .6rem 0;
+  border: solid 2px #94c398;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, #8fd080 0%, #166f24 100%);
+  position: relative;
+  transition: 0.3s ease-in-out;
+  box-shadow: 0 4px 0 #0e4e18;
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+}
+.shiny-btn__button04 a::before {
+  content: '';
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 12px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button04 a::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 21px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button04 a:hover {
+  box-shadow: 0 2px 0 #0e4e18;
+  transform: translateY(2px);
+}
+.shiny-btn__button04 a:active {
+  box-shadow: unset;
+  transform: translateY(4px);
+}
+
+.shiny-btn__button05 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.shiny-btn__button05::before {
+  display: block;
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 50px;
+  height: 50px;
+  background-image: linear-gradient(100deg,  rgba(255, 255, 255, 0) 10%, rgba(255, 255, 255, 1) 100%, rgba(255, 255, 255, 0) 0%);
+  animation-name: shiny02;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  z-index: 1;
+}
+.shiny-btn__button05 a {
+  display: inline-block;
+  width: 100%;
+  padding: .6rem 0;
+  border: solid 2px #94c398;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, #8fd080 0%, #166f24 100%);
+  position: relative;
+  transition: 0.3s ease-in-out;
+  box-shadow: 0 4px 0 #0e4e18;
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+}
+.shiny-btn__button05 a::before {
+  content: '';
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 12px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button05 a::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 21px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button05 a:hover {
+  box-shadow: 0 2px 0 #0e4e18;
+  transform: translateY(2px);
+}
+.shiny-btn__button05 a:active {
+  box-shadow: unset;
+  transform: translateY(4px);
+}
+
+/* Button 06 - グラデーション + パルス効果 */
+@keyframes pulse06 {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(110, 176, 56, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(110, 176, 56, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(110, 176, 56, 0);
+  }
+}
+
+.shiny-btn__button06 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.shiny-btn__button06 a {
+  display: inline-block;
+  width: 100%;
+  padding: .8rem 0;
+  background: linear-gradient(135deg, #6eb038 0%, #5a9a2e 50%, #4a7c25 100%);
+  border-radius: 50px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 6px 20px rgba(110, 176, 56, 0.4);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  animation: pulse06 2s infinite;
+}
+.shiny-btn__button06 a::before {
+  content: '';
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 15px;
+  bottom: 0;
+  margin: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.shiny-btn__button06 a::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 24px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button06 a:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(110, 176, 56, 0.6);
+  animation-play-state: paused;
+}
+.shiny-btn__button06 a:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 15px rgba(110, 176, 56, 0.4);
+}
+
+/* Button 07 - 3D立体感 + ホバーアニメーション */
+@keyframes bounce07 {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+.shiny-btn__button07 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+.shiny-btn__button07 a {
+  display: inline-block;
+  width: 100%;
+  padding: .9rem 0;
+  background: linear-gradient(145deg, #6eb038 0%, #5a9a2e 100%);
+  border-radius: 15px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 
+    0 8px 0 #0e4e18,
+    0 12px 20px rgba(110, 176, 56, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  animation: bounce07 2s infinite;
+}
+.shiny-btn__button07 a::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(145deg, #fff 0%, #f8f9fa 100%);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 15px;
+  bottom: 0;
+  margin: auto;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.shiny-btn__button07 a::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 25px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button07 a:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 
+    0 12px 0 #0e4e18,
+    0 16px 30px rgba(110, 176, 56, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation-play-state: paused;
+}
+.shiny-btn__button07 a:active {
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: 
+    0 6px 0 #0e4e18,
+    0 8px 20px rgba(110, 176, 56, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Button 08 - ネオン効果 + グロー効果 */
+@keyframes neon08 {
+  0%, 100% {
+    text-shadow: 
+      0 0 5px #fff,
+      0 0 10px #fff,
+      0 0 15px #6eb038,
+      0 0 20px #6eb038,
+      0 0 35px #6eb038,
+      0 0 40px #6eb038;
+    box-shadow: 
+      0 0 5px #6eb038,
+      0 0 10px #6eb038,
+      0 0 15px #6eb038,
+      0 0 20px #6eb038;
+  }
+  50% {
+    text-shadow: 
+      0 0 2px #fff,
+      0 0 5px #fff,
+      0 0 8px #6eb038,
+      0 0 12px #6eb038,
+      0 0 18px #6eb038,
+      0 0 22px #6eb038;
+    box-shadow: 
+      0 0 2px #6eb038,
+      0 0 5px #6eb038,
+      0 0 8px #6eb038,
+      0 0 12px #6eb038;
+  }
+}
+
+.shiny-btn__button08 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.shiny-btn__button08 a {
+  display: inline-block;
+  width: 100%;
+  padding: .8rem 0;
+  background: linear-gradient(45deg, #6eb038 0%, #5a9a2e 50%, #4a7c25 100%);
+  border: 2px solid #6eb038;
+  border-radius: 30px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+  animation: neon08 2s infinite;
+}
+.shiny-btn__button08 a::before {
+  content: '';
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 15px;
+  bottom: 0;
+  margin: auto;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+.shiny-btn__button08 a::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 24px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button08 a:hover {
+  transform: scale(1.05);
+  background: linear-gradient(45deg, #5a9a2e 0%, #6eb038 50%, #5a9a2e 100%);
+  animation-play-state: paused;
+}
+.shiny-btn__button08 a:active {
+  transform: scale(0.95);
+}
+
+/* Button 09 - リップル効果 + マテリアルデザイン */
+@keyframes ripple09 {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.shiny-btn__button09 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.shiny-btn__button09 a {
+  display: inline-block;
+  width: 100%;
+  padding: .8rem 0;
+  background: linear-gradient(135deg, #6eb038 0%, #5a9a2e 100%);
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 15px rgba(110, 176, 56, 0.4);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  overflow: hidden;
+}
+.shiny-btn__button09 a::before {
+  content: '';
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 15px;
+  bottom: 0;
+  margin: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.shiny-btn__button09 a::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-top: solid 3px #3b9143;
+  border-right: solid 3px #3b9143;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 24px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button09 a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(110, 176, 56, 0.6);
+}
+.shiny-btn__button09 a:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(110, 176, 56, 0.4);
+}
+.shiny-btn__button09 a:active::before {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0);
+  animation: ripple09 0.6s linear;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+}
+
+/* Button 10 - パーティクル効果 + 高級感 */
+@keyframes sparkle10 {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+@keyframes float10 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.shiny-btn__button10 {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+.shiny-btn__button10::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  width: 4px;
+  height: 4px;
+  background: #ffd700;
+  border-radius: 50%;
+  animation: sparkle10 2s infinite;
+  z-index: 1;
+}
+.shiny-btn__button10::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  width: 3px;
+  height: 3px;
+  background: #ffd700;
+  border-radius: 50%;
+  animation: sparkle10 2.5s infinite 0.5s;
+  z-index: 1;
+}
+.shiny-btn__button10 a {
+  display: inline-block;
+  width: 100%;
+  padding: 1rem 0;
+  background: linear-gradient(135deg, #4a7c25 0%, #5a9a2e 50%, #4a7c25 100%);
+  border: 2px solid #6eb038;
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 6px 0 #0e4e18,
+    0 10px 30px rgba(110, 176, 56, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  animation: float10 3s ease-in-out infinite;
+}
+.shiny-btn__button10 a::before {
+  content: '';
+  width: 35px;
+  height: 35px;
+  background: linear-gradient(145deg, #6eb038 0%, #5a9a2e 100%);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 15px;
+  bottom: 0;
+  margin: auto;
+  box-shadow: 
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.shiny-btn__button10 a::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-top: solid 3px #fff;
+  border-right: solid 3px #fff;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 0;
+  right: 26px;
+  bottom: 0;
+  margin: auto;
+}
+.shiny-btn__button10 a:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 9px 0 #0e4e18,
+    0 15px 40px rgba(110, 176, 56, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #5a9a2e 0%, #4a7c25 50%, #5a9a2e 100%);
+  animation-play-state: paused;
+}
+.shiny-btn__button10 a:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 
+    0 4px 0 #0e4e18,
+    0 6px 20px rgba(110, 176, 56, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
